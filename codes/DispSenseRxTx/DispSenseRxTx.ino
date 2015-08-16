@@ -1,10 +1,6 @@
- 
+
 #include "cc2500_REG.h"
 #include "cc2500_VAL.h"
-
-// depends on Arduino or ATtiny85
-#include <SPI.h>
-//#include "SPI85.h"
 
 #define CC2500_IDLE    0x36      // Exit RX / TX, turn
 #define CC2500_TX      0x35      // Enable TX. If in RX state, only enable TX if CCA passes
@@ -14,8 +10,19 @@
 #define CC2500_TXFIFO  0x3F
 #define CC2500_RXFIFO  0x3F
 
-// depends on Arduino or ATtiny85
+#define No_of_Bytes    3
+int PacketLength=0;
+int rssi=0, lqi=0;
+char data1, data2;
+
+// For Arduino
+#include <SPI.h>
+const int GDO0_PIN = 4;     // the number of the GDO0_PIN pin
+int GDO0_State = 0;         // variable for reading the pushbutton status
+
+//For ATtiny85
 /*
+//#include "SPI85.h" // #include things should be commented with double slash to really get disabled!
 const static uint8_t MISO = PB0;
 const static uint8_t MOSI = PB1;
 const static uint8_t SCK  = PB2;
@@ -23,36 +30,37 @@ const static uint8_t SS   = PB4;
 const static uint8_t GDO0_PIN = PB3;     // the number of the GDO0_PIN pin
 int GDO0_State = 0;
 */
-const int GDO0_PIN = 4;     // the number of the GDO0_PIN pin
-int GDO0_State = 0;         // variable for reading the pushbutton status
-
-#define No_of_Bytes    3
 
 void setup()
-{
+{              
+        // For Arduino 
         Serial.begin(9600);
         
         pinMode(SS,OUTPUT);
-        
-        // depends on Arduino or ATtiny85
-        //SPI85.begin();
+
+        // For Arduino 
         SPI.begin();
-        
+        //For ATtiny85
+        //SPI85.begin();
+       
         digitalWrite(SS,HIGH);
         pinMode(GDO0_PIN, INPUT);     
         init_CC2500();
         Read_Config_Regs();
+   
+        // For Arduino         
+        Serial.println("Starting..");
 }
 
 void loop()
 {        
         delay(10);
-        TxData_RF(No_of_Bytes); 
-        delay(500);                 
+        send_packet(No_of_Bytes); 
+        delay(500);           
+        //recv_packet();       
 }
 
-//  Send slide strobe
-void TxData_RF( unsigned char length)
+void send_packet(unsigned char length)
 {
       // Make sure that the radio is in IDLE state before flushing the FIFO
       SendStrobe(CC2500_IDLE);
@@ -91,7 +99,92 @@ void TxData_RF( unsigned char length)
            GDO0_State = digitalRead(GDO0_PIN);
            //Serial.println("GD0 = 1");
        }
-}// Rf TX Packet 
+}
+
+void recv_packet(void) 
+{    
+        PacketLength=0;
+        // RX: enable RX
+        SendStrobe(CC2500_RX);
+
+        GDO0_State = digitalRead(GDO0_PIN);
+        //    Serial.println("GDO0");
+        //    Serial.println(GDO0_State);
+        
+        //#Asanka
+        if(GDO0_State) {
+                Serial.println("GDO0_State already HIGH");
+                delay(500);
+                SendStrobe(CC2500_IDLE);
+                SendStrobe(CC2500_FRX);
+                delay(2000);
+                return;
+        }
+    
+        // Wait for GDO0 to be set -> sync received
+        while (!GDO0_State) {
+                // read the state of the GDO0_PIN value:
+                GDO0_State = digitalRead(GDO0_PIN);
+                //Serial.println("GD0 = 0");
+                //#Asanka: decresed the delay
+                //delay(100);
+                delay(10);
+        }
+    
+        // Wait for GDO0 to be cleared -> end of packet
+        while (GDO0_State) {
+                // read the state of the GDO0_PIN value:
+                GDO0_State = digitalRead(GDO0_PIN);
+                //Serial.println("GD0 = 1");
+                //#Asanka: decresed the delay
+                //delay(100);
+                delay(10);
+        }
+        
+        //char data1, data2;
+        // Read length byte
+        PacketLength = ReadReg(CC2500_RXFIFO);        
+          
+        if(No_of_Bytes == PacketLength)
+        {                                
+                Serial.println("---------------------");
+                Serial.print("Packet Received, length= ");
+                Serial.println(PacketLength,HEX);                
+                
+                Serial.print("Data: ");
+                data1 = ReadReg(CC2500_RXFIFO);
+                data2 = ReadReg(CC2500_RXFIFO);                    
+                Serial.print(data1,HEX);
+                //delay(10);
+                Serial.println(data2,HEX);                                                
+                Serial.println("---------------------");
+                
+        } else {                        
+                /*
+                Serial.println("---------------------");
+                Serial.print("Received some junk, length= ");
+                Serial.println(PacketLength,HEX);                
+                Serial.println("---------------------");                
+                */
+        }
+         
+        // Make sure that the radio is in IDLE state before flushing the FIFO
+        // (Unless RXOFF_MODE has been changed, the radio should be in IDLE state at this point) 
+        SendStrobe(CC2500_IDLE);
+        // Flush RX FIFO
+        SendStrobe(CC2500_FRX);                               
+
+        if(No_of_Bytes == PacketLength) {
+                
+                rssi = ReadReg(REG_RSSI);
+                lqi = ReadReg(REG_LQI);                              
+                
+                Serial.print("RSSI: ");          
+                Serial.println(rssi);
+                Serial.print("LQI: ");          
+                Serial.println(lqi);                                 
+        }
+}
 	
 
 void WriteReg(char addr, char value) {
@@ -99,16 +192,18 @@ void WriteReg(char addr, char value) {
   
         while (digitalRead(MISO) == HIGH) {
         };
-    
-        // depends on Arduino or ATtiny85
+
+        // For Arduino 
+        SPI.transfer(addr);        
+        // For ATtiny85
         //SPI85.transfer(addr);
-        SPI.transfer(addr);
         
         delay(10);
         
-        // depends on Arduino or ATtiny85
-        //SPI85.transfer(value);
+        // For Arduino 
         SPI.transfer(value);
+        // For ATtiny85
+        //SPI85.transfer(value);
                 
         digitalWrite(SS,HIGH);
 }
@@ -119,15 +214,17 @@ char ReadReg(char addr) {
         while (digitalRead(MISO) == HIGH) {
         };
         
-        // depends on Arduino or ATtiny85
-        //char x = SPI85.transfer(addr);
+        // For Arduino 
         char x = SPI.transfer(addr);
-        
+        // For ATtiny85
+        //char x = SPI85.transfer(addr);
+       
         delay(10);
-        
-        // depends on Arduino or ATtiny85
+
+        // For Arduino         
+        char y = SPI.transfer(0);        
+        // For ATtiny85
         //char y = SPI85.transfer(0);
-        char y = SPI.transfer(0);
         
         digitalWrite(SS,HIGH);
         return y;  
@@ -138,10 +235,11 @@ char SendStrobe(char strobe) {
   
         while (digitalRead(MISO) == HIGH) {
         };
-    
-        // depends on Arduino or ATtiny85
+
+        // For Arduino                 
+        char result =  SPI.transfer(strobe);    
+        // For ATtiny85
         //char result =  SPI85.transfer(strobe);
-        char result =  SPI.transfer(strobe);
         
         digitalWrite(SS,HIGH);
         delay(10);
@@ -220,12 +318,14 @@ void init_CC2500()
 
 void Read_Config_Regs(void)
 { 
-  //Serial.println(ReadReg(REG_IOCFG2),HEX);
+   // For Arduino                 
+   Serial.println(ReadReg(REG_IOCFG2),HEX);
    delay(10);
-  //Serial.println(ReadReg(REG_IOCFG1),HEX);
+   Serial.println(ReadReg(REG_IOCFG1),HEX);
    delay(10);
-  //Serial.println(ReadReg(REG_IOCFG0),HEX);
+   Serial.println(ReadReg(REG_IOCFG0),HEX);
    delay(10);
+   
 /* Serial.println(ReadReg(REG_FIFOTHR),HEX);
    delay(10);
   Serial.println(ReadReg(REG_SYNC1),HEX);
