@@ -6,8 +6,8 @@ import numpy as np
 # our other module
 import matrix_experiments
 
-width = 5
-height = 5
+width = 12
+height = 12
 
 W = matrix_experiments.initialize(width, height)
 

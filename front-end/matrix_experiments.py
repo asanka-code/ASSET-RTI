@@ -4,6 +4,9 @@ import numpy as np
 import scipy.ndimage
 import matplotlib.pyplot as plt
 
+# our other module
+import network_simulator
+
 node_list = []
 links = []
 W = []
@@ -62,18 +65,16 @@ def genRSSCalibrationVector():
 	return
 
 
-def getRSSVector():
-	R = []
-	i=0
-	while i<len(links):
-		R.append(-18)
-		i=i+1
+# this should read data from the network. Currently providing dummy data.
+def getRSSVector(width, height):
+	R = network_simulator.initialize(width, height, links)
 	print 'Current RSS vector R=',R
 	return R
 
-def getY():
+
+def getY(width, height):
 	Y = []
-	R = getRSSVector()
+	R = getRSSVector(width, height)
 	i=0
 	while i<len(links):
 		Y.append(Rs[i]-R[i])
@@ -82,17 +83,24 @@ def getY():
 
 
 def initialize(width, height):
-	addNodePosition(0,0)
-	addNodePosition(4,0)
 	addNodePosition(0,4)
-	addNodePosition(4,4)
-	#print 'node_list='
-	#print node_list
+	addNodePosition(0,8)
+
+	addNodePosition(11,4)
+	addNodePosition(11,8)
+
+	addNodePosition(4,0)
+	addNodePosition(8,0)
+
+	addNodePosition(4,11)
+	addNodePosition(8,11)	
 
 	generateLinks()
 	generateWeightMatrix(width, height)
 	genRSSCalibrationVector()
-	print getY()
+
+	Y = getY(width, height)
+	print "Y=", Y
 	return W
 
-
+#initialize(12, 12)
