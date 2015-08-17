@@ -9,7 +9,8 @@ import matrix_experiments
 width = 12
 height = 12
 
-W = matrix_experiments.initialize(width, height)
+# initialize our processing backend
+matrix_experiments.initialize(width, height)
 
 #x = np.arange(width)
 #y = np.arange(height)
@@ -36,13 +37,12 @@ plt.grid()
 plt.show()
 
 while True:
-	print 'len(W)=',len(W)
+
+	image_matrix = matrix_experiments.getImageMatrix(width, height)
+	#print 'len(image_matrix)=',len(image_matrix)
 	i=0
-	while i<len(W):
-		# update the z matrix
-		print 'W[',i,']:'
-		print W[i]
-		p.set_data(W[i])
+	while i<len(image_matrix):
+		p.set_data(image_matrix[i])
 		plt.draw()
 	    	plt.pause(0.5)
 		i = i + 1

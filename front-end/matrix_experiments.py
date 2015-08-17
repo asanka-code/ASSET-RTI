@@ -10,6 +10,7 @@ import network_simulator
 node_list = []
 links = []
 W = []
+weightMatrix = []
 Rs = []
 
 def addNodePosition(x, y):
@@ -51,9 +52,23 @@ def generateWeightMatrix(width, height):
 		z0[xarray1.astype(np.int), yarray1.astype(np.int)] = 1
 		#print 'z0:'
 		#print z0
-
-		W.append(z0)
+		W.append(z0.flatten())
+		#print W
+		
+		weightMatrix.append(z0)			
 		i=i+1
+
+	# generate 'W' metrix using 'weightMatrix'
+	#print 'generating W'
+	#print 'len(W):', len(W)
+	'''
+	i=0
+	A = []
+	while i<len(links):
+		A = np.squeeze(np.asarray(weightMatrix[i]))
+		i=i+1	
+	print "A:", A
+	'''
 
 
 def genRSSCalibrationVector():
@@ -61,28 +76,13 @@ def genRSSCalibrationVector():
 	while i<len(links):
 		Rs.append(-18)
 		i=i+1
-	print 'Initial RSS vector Rs=',Rs	
+	#print 'Initial RSS vector Rs=',Rs	
 	return
 
 
-# this should read data from the network. Currently providing dummy data.
-def getRSSVector(width, height):
-	R = network_simulator.initialize(width, height, links)
-	print 'Current RSS vector R=',R
-	return R
-
-
-def getY(width, height):
-	Y = []
-	R = getRSSVector(width, height)
-	i=0
-	while i<len(links):
-		Y.append(Rs[i]-R[i])
-		i=i+1
-	return Y
-
-
 def initialize(width, height):
+
+	# add the sensor node positions
 	addNodePosition(0,4)
 	addNodePosition(0,8)
 
@@ -95,12 +95,52 @@ def initialize(width, height):
 	addNodePosition(4,11)
 	addNodePosition(8,11)	
 
+	# generate the links which connect each sensor node
 	generateLinks()
+
+	# generate the weight metrix according to the links
 	generateWeightMatrix(width, height)
+
+	# generate the Rs vector with static RSSI values for each link
 	genRSSCalibrationVector()
 
-	Y = getY(width, height)
-	print "Y=", Y
-	return W
+	# ask the mesh network to start
+	network_simulator.init(width, height, links)
+
+
+def getImageMatrix(width, height):
+	Y = []
+	X = []
+	linear_equation_matrix = []
+
+	# read the R vector (current RSSI values for each link) from the network
+	R = network_simulator.readRSSI(width, height, links)
+
+	# calculating Y vector (Y=Rs-R)
+	i=0
+	while i<len(links):
+		Y.append(Rs[i]-R[i])
+		i=i+1
+
+	# STOPPED IN THIS REGION
+	#-----------------------------------------------------------------------
+	# calculate X vector using Y vector and Weight matrix
+	#print 'Y:', Y
+	#print 'W:', W
+	i=0
+	while i<len(Y):
+		print 'W[',i,"]=", W[i]
+		print 'Y[',i,"]=", Y[i]
+
+		print 'len(W[',i,'])=', len(W[i])
+		#linear_equation_matrix.append( [W[i], Y[i]] )
+		#print 'linear_equation_matrix:'
+		#print linear_equation_matrix
+		i=i+1
+	#-----------------------------------------------------------------------
+
+	return weightMatrix
+
 
 #initialize(12, 12)
+

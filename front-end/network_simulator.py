@@ -8,6 +8,7 @@ tx_power = -18 		# -18dB
 block_attenuation = 10 	#  10dB
 obstacle_list = []
 field_view_matrix = []
+link_array = []
 
 
 def addObstaclePosition(x, y):
@@ -15,10 +16,10 @@ def addObstaclePosition(x, y):
 	obstacle_list.append([x,y])
 	return
 
-
-def initialize(width, height, link_array):
 	
-	R = []
+def init(field_width, field_height, field_link):
+
+	global field_view_matrix
 
 	# define the locations of obstacle blocks
 	addObstaclePosition(2,3)
@@ -27,25 +28,35 @@ def initialize(width, height, link_array):
 	addObstaclePosition(3,4)
 
 	# create the field view matrix according to the placement of obstacles
-	field_view_matrix = np.random.uniform(0,0,size=(width,height))
+	field_view_matrix = np.random.uniform(0, 0, size=(field_width, field_height))
 	i=0
 	while i<len(obstacle_list):
 		field_view_matrix[obstacle_list[i][0]][obstacle_list[i][1]] = 1
 		i=i+1
+
 	#print "field_view_matrix:"
 	#print field_view_matrix
+	return
 
+
+def readRSSI(field_width, field_height, field_link):
+	global field_view_matrix
+	R = []
+	
+	# update field view matrix here. (It should change dynamically when obstacles move)
+
+	# generate R vector containing RSS of each link
 	i=0
-	while i<len(link_array):
-		xpoint0, ypoint0 = link_array[i][0][0], link_array[i][0][1]
-		xpoint1, ypoint1 = link_array[i][1][0], link_array[i][1][1]
+	while i<len(field_link):
+		xpoint0, ypoint0 = field_link[i][0][0], field_link[i][0][1]
+		xpoint1, ypoint1 = field_link[i][1][0], field_link[i][1][1]
 
 		# Extracting the coordinates of the voxels along the line
 		length = int(np.hypot(xpoint1-xpoint0, ypoint1-ypoint0)) + 1
 		xarray1, yarray1 = np.linspace(xpoint0, xpoint1, length), np.linspace(ypoint0, ypoint1, length)
 
 		# Generate the link matrix
-		Z = np.random.uniform(0,0,size=(width,height))
+		Z = np.random.uniform(0,0,size=(field_width, field_height))
 
 		# Set a new value to each voxel along the line
 		Z[xarray1.astype(np.int), yarray1.astype(np.int)] = 1
@@ -68,6 +79,7 @@ def initialize(width, height, link_array):
 
 	#print "R = ", R
 	return R
+
 
 #initialize(12, 12)
 
