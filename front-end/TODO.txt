@@ -1,0 +1,6 @@
+(1) Add the capability to read the sensor node placement and simulater
+obstacle placement from a config file.
+
+(2) Add a gaussian noise to each link's RSSI value (R vector).
+
+(3) Solve the linear equation associated with Y, W and X.
