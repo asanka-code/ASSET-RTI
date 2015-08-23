@@ -120,7 +120,7 @@ def getImageMatrix(width, height):
 	# calculating Y vector (Y=Rs-R)
 	i=0
 	while i<len(links):
-		Y.append(Rs[i]-R[i])
+		Y.append([Rs[i]-R[i]])
 		i=i+1
 
 	# STOPPED IN THIS REGION
@@ -130,14 +130,37 @@ def getImageMatrix(width, height):
 	#print 'W:', W
 	i=0
 	while i<len(Y):
-		print 'W[',i,"]=", W[i]
-		print 'Y[',i,"]=", Y[i]
-		print 'len(W[',i,'])=', len(W[i])
+		#print 'W[',i,"]=", W[i]
+		#print 'Y[',i,"]=", Y[i]
+		#print 'len(W[',i,'])=', len(W[i])
 
 		#linear_equation_matrix.append( [W[i], Y[i]] )
 		#print 'linear_equation_matrix:'
 		#print linear_equation_matrix
 		i=i+1
+	
+	print "Y=", Y
+	print 'W[',1,"]=", W[1]
+	print 'Y[',1,"]=", Y[1]
+	print 'len(W[',1,'])=', len(W[1])
+	print 'len(W)=', len(W)
+
+	print np.linalg.solve(W, Y)
+
+	'''
+	m = np.matrix([
+	    [1, 1, 1, 1, 1],
+	    [16, 8, 4, 2, 1],
+	    [81, 27, 9, 3, 1],
+	    [256, 64, 16, 4, 1],
+	    [625, 125, 25, 5, 1]
+	])
+
+	res = np.matrix([[1],[2],[3],[4],[8]])
+
+	#print np.linalg.solve(m, res)
+	'''
+
 	#-----------------------------------------------------------------------
 
 	return weightMatrix
