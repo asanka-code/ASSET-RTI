@@ -3,6 +3,7 @@
 import numpy as np
 import scipy.ndimage
 import matplotlib.pyplot as plt
+import ConfigParser
 
 # our other module
 import network_simulator
@@ -80,20 +81,19 @@ def genRSSCalibrationVector():
 	return
 
 
-def initialize(width, height):
+#def initialize(width, height):
+def initialize(config):
+
+	width = config.getint('Grid','width')
+	height = config.getint('Grid','height')
+	num_nodes = config.getint('Grid','num_nodes')
 
 	# add the sensor node positions
-	addNodePosition(0,4)
-	addNodePosition(0,8)
-
-	addNodePosition(11,4)
-	addNodePosition(11,8)
-
-	addNodePosition(4,0)
-	addNodePosition(8,0)
-
-	addNodePosition(4,11)
-	addNodePosition(8,11)	
+		
+	i=1
+	while i<num_nodes+1:
+		addNodePosition(config.getint(str(i),'x'),config.getint(str(i),'y'))
+		i=i+1	
 
 	# generate the links which connect each sensor node
 	generateLinks()
@@ -105,7 +105,8 @@ def initialize(width, height):
 	genRSSCalibrationVector()
 
 	# ask the mesh network to start
-	network_simulator.init(width, height, links)
+	#network_simulator.init(width, height, links)
+	network_simulator.init(links)
 
 
 def getImageMatrix(width, height):
@@ -114,7 +115,7 @@ def getImageMatrix(width, height):
 	linear_equation_matrix = []
 
 	# read the R vector (current RSSI values for each link) from the network
-	R = network_simulator.readRSSI(width, height, links)
+	R = network_simulator.readRSSI(links)
 
 	# calculating Y vector (Y=Rs-R)
 	i=0
@@ -131,8 +132,8 @@ def getImageMatrix(width, height):
 	while i<len(Y):
 		print 'W[',i,"]=", W[i]
 		print 'Y[',i,"]=", Y[i]
-
 		print 'len(W[',i,'])=', len(W[i])
+
 		#linear_equation_matrix.append( [W[i], Y[i]] )
 		#print 'linear_equation_matrix:'
 		#print linear_equation_matrix

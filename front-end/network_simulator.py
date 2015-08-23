@@ -3,12 +3,15 @@
 import numpy as np
 import scipy.ndimage
 import matplotlib.pyplot as plt
+import ConfigParser
 
 tx_power = -18 		# -18dB
 block_attenuation = 10 	#  10dB
 obstacle_list = []
 field_view_matrix = []
 link_array = []
+field_width = 0
+field_height = 0
 
 
 def addObstaclePosition(x, y):
@@ -17,15 +20,31 @@ def addObstaclePosition(x, y):
 	return
 
 	
-def init(field_width, field_height, field_link):
+def init(field_link):
 
 	global field_view_matrix
+	global field_width, field_height
+
+	sim_config = ConfigParser.ConfigParser()
+	sim_config.read("simulator.cfg")
+	field_width = sim_config.getint('Grid','width')
+	field_height = sim_config.getint('Grid','height')
+
+	start_x = sim_config.getint('Xrange','start')
+	end_x = sim_config.getint('Xrange','end')
+
+	start_y = sim_config.getint('Yrange','start')
+	end_y = sim_config.getint('Yrange','end')
 
 	# define the locations of obstacle blocks
-	addObstaclePosition(2,3)
-	addObstaclePosition(2,4)
-	addObstaclePosition(3,3)
-	addObstaclePosition(3,4)
+
+	x = start_x
+	while x<end_x+1:
+		y = start_y
+		while y<end_y+1:
+			addObstaclePosition(x,y)
+			y=y+1
+		x=x+1
 
 	# create the field view matrix according to the placement of obstacles
 	field_view_matrix = np.random.uniform(0, 0, size=(field_width, field_height))
@@ -36,11 +55,13 @@ def init(field_width, field_height, field_link):
 
 	#print "field_view_matrix:"
 	#print field_view_matrix
+	#print "num_obstacles = %s" % len(obstacle_list)
 	return
 
 
-def readRSSI(field_width, field_height, field_link):
+def readRSSI(field_link):
 	global field_view_matrix
+	global field_width, field_height
 	R = []
 	
 	# update field view matrix here. (It should change dynamically when obstacles move)

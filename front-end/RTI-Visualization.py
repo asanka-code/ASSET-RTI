@@ -2,15 +2,24 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import ConfigParser
 
 # our other module
 import matrix_experiments
 
-width = 12
-height = 12
+#width = 12
+#height = 12
+
+config = ConfigParser.ConfigParser()
+config.read("rti_network.cfg")
+
+width = config.getint('Grid','width')
+height = config.getint('Grid','height')
+
 
 # initialize our processing backend
-matrix_experiments.initialize(width, height)
+#matrix_experiments.initialize(width, height)
+matrix_experiments.initialize(config)
 
 #x = np.arange(width)
 #y = np.arange(height)
@@ -44,7 +53,8 @@ while True:
 	while i<len(image_matrix):
 		p.set_data(image_matrix[i])
 		plt.draw()
-	    	plt.pause(0.5)
+	    	#plt.pause(0.5)
+		plt.pause(0.00001)
 		i = i + 1
 
 	'''
