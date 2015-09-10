@@ -1,3 +1,23 @@
+/* 
+---------------------------------------------------------------
+   Arduino to CC2500 Pin connectivity
+   --------------------------------------------
+   Hardware SPI:
+   MISO -> 12
+   MOSI -> 11
+   SCLK/SCK -> 13
+   CSN/SS - > 10
+ 
+   ATtiny85 to CC2500 Pin connectivity
+   ----------------------------------------------
+   MISO = PB0;
+   MOSI = PB1;
+   SCK  = PB2;
+   SS   = PB4;  
+ ---------------------------------------------------------------   
+ */
+
+
 
 #include "cc2500_REG.h"
 #include "cc2500_VAL.h"
@@ -54,10 +74,11 @@ void setup()
 
 void loop()
 {        
-        delay(10);
-        send_packet(No_of_Bytes); 
-        delay(500);           
-        //recv_packet();       
+        //delay(10);                        
+        //send_packet(No_of_Bytes); 
+        //Serial.println("Sent a packet");
+        //delay(500);       
+        recv_packet();       
 }
 
 void send_packet(unsigned char length)
