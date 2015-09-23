@@ -51,6 +51,9 @@ const static uint8_t GDO0_PIN = PB3;     // the number of the GDO0_PIN pin
 int GDO0_State = 0;
 */
 
+// State: packet available=1, packet not available=0
+volatile int state = 0;
+
 void setup()
 {              
         // For Arduino 
@@ -67,19 +70,60 @@ void setup()
         pinMode(GDO0_PIN, INPUT);     
         init_CC2500();
         Read_Config_Regs();
+
+        // testing an interrupt        
+        //attachInterrupt(0, myISR, CHANGE);
+        attachInterrupt(digitalPinToInterrupt(2), myISR, FALLING);
    
         // For Arduino         
         Serial.println("Starting..");
 }
 
 void loop()
-{        
-        delay(10);                        
-        send_packet(No_of_Bytes); 
-        Serial.println("Sent a packet");
-        delay(2000);       
+{                   
+      // Make sure that the radio is in IDLE state before flushing the FIFO
+      SendStrobe(CC2500_IDLE);
+      // Flush TX FIFO
+      SendStrobe(CC2500_FTX);
+
+      // prepare Packet
+      unsigned char packet[No_of_Bytes];
+      // First Byte = Length Of Packet
+      packet[0] = No_of_Bytes;
+      packet[1] = 0x05;
+      packet[2] = 0x06;      
+      
+      // SIDLE: exit RX/TX
+      SendStrobe(CC2500_IDLE);
+      
+      for(int i = 0; i < No_of_Bytes; i++)
+      {    
+              WriteReg(CC2500_TXFIFO,packet[i]);
+      }
+
+      state = 0;             
+      
+      // STX: enable TX
+      SendStrobe(CC2500_TX);
+        
+      while(state==0){ }
+
+      Serial.println("Sent a packet");
+      delay(2000);       
+      
+      
+        //delay(10);                        
+        //send_packet(No_of_Bytes); 
+        //Serial.println("Sent a packet");
+        //delay(2000);       
         
         //recv_packet();       
+}
+
+void myISR()
+{
+        Serial.println("---Interrupted---");        
+        state = 1;
 }
 
 void send_packet(unsigned char length)
