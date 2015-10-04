@@ -54,6 +54,15 @@ int GDO0_State = 0;
 // State: packet available=1, packet not available=0
 volatile int state = 0;
 
+struct packet_struct {
+  byte packet_size; // 1 byte 
+  byte system_id;   // 1 byte
+  byte component_id;          // 1 byte
+  byte wakeup_time;          // 1 byte
+};
+
+static packet_struct packet;               
+
 void setup()
 {              
         // For Arduino 
@@ -70,6 +79,14 @@ void setup()
         pinMode(GDO0_PIN, INPUT);     
         init_CC2500();
         Read_Config_Regs();
+
+        // generating packet        
+        packet.packet_size = 4;
+        packet.system_id = 0;
+        packet.component_id = 1;
+        packet.wakeup_time = 0;
+
+        randomSeed(analogRead(0));
         
         // testing an interrupt        
         //attachInterrupt(0, myISR, CHANGE);
@@ -81,11 +98,20 @@ void setup()
 }
 
 void loop()
-{                        
-        //delay(10);                        
-        send_packet(No_of_Bytes); 
+{      
+
+        /*
+        packet.wakeup_time = random(1,5);
+        send_packet();                
+        Serial.println("Sent a packet");        
+        delay( 400 * (packet.wakeup_time) );       
+        */
+        
+        
+        send_packet();                
         Serial.println("Sent a packet");
         delay(1000);       
+        
         
         //recv_packet();       
 
@@ -172,26 +198,29 @@ void myISR()
         state = 1;
 }
 
-void send_packet(unsigned char length)
-{
+void send_packet()
+{            
+      // from GumboNode code
+      WriteReg(REG_IOCFG1,0x06);
+      
       // Make sure that the radio is in IDLE state before flushing the FIFO
       SendStrobe(CC2500_IDLE);
       // Flush TX FIFO
       SendStrobe(CC2500_FTX);
 
-      // prepare Packet
-      unsigned char packet[length];
-      // First Byte = Length Of Packet
-      packet[0] = length;
-      packet[1] = 0x05;
-      packet[2] = 0x06;      
+      // prepare Packet      
+      unsigned char tmp_packet[packet.packet_size];      
+      tmp_packet[0] = packet.packet_size;
+      tmp_packet[1] = packet.system_id;
+      tmp_packet[2] = packet.component_id;      
+      tmp_packet[3] = packet.wakeup_time;
       
       // SIDLE: exit RX/TX
       SendStrobe(CC2500_IDLE);
       
-      for(int i = 0; i < length; i++)
+      for(int i = 0; i < packet.packet_size; i++)
       {	  
-              WriteReg(CC2500_TXFIFO,packet[i]);
+              WriteReg(CC2500_TXFIFO,tmp_packet[i]);
       }
       // STX: enable TX
       SendStrobe(CC2500_TX);

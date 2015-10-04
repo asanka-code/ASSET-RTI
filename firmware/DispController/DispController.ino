@@ -32,10 +32,14 @@
 
 #define No_of_Bytes    3
 int PacketLength=0;
-byte rssi_dec=0;
-byte rssi_offset=71; // since the data rate is about 2.4 kBaud according to the cc2500_VAL.h
-int rssi_dBm=0;
-byte crc_lqi=0, lqi=0;
+
+uint8_t rssi_dec=0;
+uint8_t rssi_offset=71; // since the data rate is about 2.4 kBaud according to the cc2500_VAL.h
+int16_t rssi_dBm=0;
+
+//byte crc_lqi=0, lqi=0;
+uint8_t crc_lqi=0;
+uint8_t lqi=0;
 char data1, data2;
 
 
@@ -58,6 +62,15 @@ int GDO0_State = 0;
 // State: packet available=1, packet not available=0
 volatile int state = 0;
 
+struct packet_struct {
+  byte packet_size; // 1 byte 
+  byte system_id;   // 1 byte
+  byte component_id;          // 1 byte
+  byte wakeup_time;          // 1 byte
+};
+
+static packet_struct packet; 
+
 void setup()
 {              
         // For Arduino 
@@ -74,6 +87,9 @@ void setup()
         pinMode(GDO0_PIN, INPUT);     
         init_CC2500();
         Read_Config_Regs();
+
+        // generating packet        
+        packet.packet_size = 4;
 
         // testing an interrupt        
         //attachInterrupt(0, myISR, CHANGE);
@@ -135,44 +151,61 @@ void loop()
         // RX: enable RX
         SendStrobe(CC2500_RX);       
 
+        // from GumboNode code
+        WriteReg(REG_IOCFG1,0x01);
+        delay(20);
+
         while(state==0){ }
                   
         PacketLength=0;
         //Serial.println("Packet ready");
-        state = 0;             
-
-        PacketLength = ReadReg(CC2500_RXFIFO);        
-        data1 = ReadReg(CC2500_RXFIFO);
-        data2 = ReadReg(CC2500_RXFIFO);                                
-        rssi_dec = ReadReg(CC2500_RXFIFO);                                                                         
-        crc_lqi = ReadReg(CC2500_RXFIFO);          
+        state = 0;           
         
-        if(No_of_Bytes == PacketLength)
-        {                                
-           Serial.println("---------------------");
-           Serial.print("Packet Received, length= ");
-           Serial.println(PacketLength,HEX);                
-                
-           Serial.print("Data: ");
-           Serial.print(data1,HEX);
-           Serial.println(data2,HEX);       
+        packet.packet_size = ReadReg(CC2500_RXFIFO);
+        packet.system_id = ReadReg(CC2500_RXFIFO);
+        packet.component_id = ReadReg(CC2500_RXFIFO);
+        packet.wakeup_time = ReadReg(CC2500_RXFIFO);               
 
-           if (rssi_dec >= 128)
-              rssi_dBm = (int)((int)( rssi_dec - 256) / 2) - rssi_offset;
-           else
-              rssi_dBm = (rssi_dec / 2) - rssi_offset;
+        rssi_dec = ReadReg(CC2500_RXFIFO);                                                                         
+        crc_lqi = ReadReg(CC2500_RXFIFO);                   
+
+        byte PQTReached = isPQTReached();
+
+        if(packet.packet_size == 4 && PQTReached)
+        {                                
+           Serial.println("");
+           Serial.print("Packet Received, length= ");
+           Serial.print(packet.packet_size,HEX);                
+                
+           Serial.print("  system_id: ");
+           Serial.print(packet.system_id,HEX);
+           Serial.print("  component_id: ");
+           Serial.println(packet.component_id,HEX);       
+           
+           if ((int)rssi_dec >= 128)
+              rssi_dBm = (((int)rssi_dec - 256) / 2 - rssi_offset);
+            else
+              rssi_dBm = ((int)rssi_dec / 2 - rssi_offset);
               
            Serial.print("RSSI (dBm): ");          
            Serial.println(rssi_dBm);            
-
-           lqi = ( crc_lqi & (byte)0b01111111 );
-           Serial.print("LQI (0-255): ");          
-           Serial.println(lqi);
-           //Serial.print("LQI (BIN): ");          
-           //Serial.println(lqi,BIN);
            
-           Serial.println("---------------------");                
-        }
+                      
+           lqi = ( crc_lqi & 0x7F );  
+           //lqi = ( crc_lqi & 0b01111111 );  
+           
+           Serial.print("LQI: ");          
+           Serial.println(lqi, DEC);                                                            
+
+           int crc = crc_lqi & 0x80;
+           if(crc == 128){
+              Serial.print("Packet is good");
+           } else {
+              Serial.print("Packet is bad"); 
+           }
+           
+           Serial.println("");
+        }        
                
         // Make sure that the radio is in IDLE state before flushing the FIFO
         // (Unless RXOFF_MODE has been changed, the radio should be in IDLE state at this point) 
@@ -187,6 +220,11 @@ void myISR()
 {
         //Serial.println("---Interrupted---");        
         state = 1;
+}
+
+boolean isPQTReached() {
+  
+  return ReadReg(REG_PKTSTATUS) && B00100000;
 }
 
 void send_packet(unsigned char length)
