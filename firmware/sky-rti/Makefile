@@ -1,4 +1,4 @@
-CONTIKI = ../..
+CONTIKI = ../../../contiki
 
 all: example-broadcast
 
