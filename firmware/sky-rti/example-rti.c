@@ -55,8 +55,9 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
   int8_t rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
   int8_t lqi = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY);
+  unsigned long time = clock_seconds();
 
-  printf("%d %d\n", rssi, lqi);
+  printf("%lu %d %d\n", time, rssi, lqi);
 }
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 static struct broadcast_conn broadcast;
@@ -81,7 +82,7 @@ PROCESS_THREAD(example_broadcast_process, ev, data)
 
     packetbuf_copyfrom("Hello", 6);
     broadcast_send(&broadcast);
-    printf("broadcast message sent\n");
+    //printf("\n");
   }
 
   PROCESS_END();
