@@ -54,10 +54,9 @@ static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
   int8_t rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
-  //int8_t lqi = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY);
+  int8_t lqi = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY);
 
-  printf("broadcast message received from %d.%d: '%s' RSSI:%d \n",
-         from->u8[0], from->u8[1], (char *)packetbuf_dataptr(), rssi);
+  printf("%d %d\n", rssi, lqi);
 }
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 static struct broadcast_conn broadcast;
