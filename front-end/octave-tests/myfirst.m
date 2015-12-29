@@ -93,11 +93,11 @@ for i=1:60
 	X=Y*W;
 	
 	% attempting to apply a high-pass filter to reduce noise or smooth out
-	for i=1:length(X)
-		if X(:,i)<5
-			X(:,i)=0;
-		end
-	end
+	%for i=1:length(X)
+	%	if X(:,i)<5
+	%		X(:,i)=0;
+	%	end
+	%end
 
 	[mat,padded] = vec2mat(X,width);
 	%mat
