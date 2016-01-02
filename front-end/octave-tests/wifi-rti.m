@@ -82,8 +82,55 @@ end
 
 num_links
 
-% dynamically drawing the image based on different Y vectors
-for i=1:60
+% the named pipe file from which the RSSI data comes as a structured string
+fid = fopen ("/home/asanka/Downloads/myfifo");
+% temporary variable to hold each data line from the file
+txt="0";
+
+% initialize the Y vector with RSSI values as 0
+Y=zeros(1, num_links);
+
+% initialize historyY matrix
+historyY = [];
+
+% initialize backgroundY matrix
+backgroundY = [];
+
+% dynamically drawing the image based on different Y vectors until the end of file
+while(txt!=-1)
+	txt=fgetl(fid);
+	if(txt!=-1)
+		txt
+		packet = strsplit(txt);
+		senderMAC = packet(1,1)
+		num_data = cell2mat(packet(1,2))
+
+		%{
+		% Asanka: Extract the other MAC addresses and their RSSI values
+		i=0;
+		while(i<num_data)
+			packet(1,i+3)
+			i
+			i=i+1;
+		end
+		%}
+
+		% Asanka: For each extracted MAC address pair, find it's correct
+		%index position using linkMACs list and then insert the RSSI value
+		% to that correct position in Y vector.
+
+		% Asanka: Append this updated Y vector to historyY matrix as a new raw.
+		% A 'running average' was performed in this historyY matrix to get the
+		% backgroundY vector in each time we update this historyY matrix.
+		% Additionally, remove unnecessary old data raws from historyY matrix
+		% which are out of the current window.
+
+		% Asanka: calculate the difference of Y vector and backgroundY vector
+		% to get an RSSI vector which we will use in the calculation of
+		% image construction.
+
+	end
+
 	% generating a Y vector with sample RSSI change values
 	%Y=zeros(1, num_links);
 	Y=rand(1, num_links);
@@ -91,12 +138,7 @@ for i=1:60
 	%Y(170:190)=25;
 	%Y(50:60)=50;
 	%Y(150:160)=60;
-	%Y(randi([20 60]):randi([70 90]))=1;
-
-	%Asanka: Instead of above code segment to randomly generate Y vector, I should
-	% read a line from the 'named pipe' file and process it to extract each pair of
-	% nodes that represent a link and its associated RSSI value.
-	
+	%Y(randi([20 60]):randi([70 90]))=1;	
 
 	% generating image matrix based on Y vector
 	X=Y*W;
@@ -116,7 +158,9 @@ for i=1:60
 	colorbar
 	title('Radio Tomographic Imaging');
 
-	pause(1)
+	pause(0.5)
 end
+
+fclose (fid);
 
 
