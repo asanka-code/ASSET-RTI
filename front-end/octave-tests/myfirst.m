@@ -1,6 +1,7 @@
 % dimentions of the terrain
 width=30;
 height=30;
+
 % N is the number of voxels in the image
 N = width * height;
 
