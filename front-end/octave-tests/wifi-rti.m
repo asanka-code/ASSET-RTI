@@ -1,6 +1,8 @@
 % dimentions of the terrain
-width=30;
-height=30;
+%width=30;
+%height=30;
+width=5;
+height=5;
 
 % N is the number of voxels in the image
 N = width * height;
@@ -9,13 +11,15 @@ N = width * height;
 W=[];
 
 # Location and MAC address of RSSI measuring nodes
-RxNodes = {30,5,'e4:d5:3d:ed:f5:bd';
-	30,25,'e4:d5:3d:ed:f5:be'}
+RxNodes = {5,2,'b0:47:bf:ee:54:da'; % Samsung GrandPrime smartphone
+	%30,25,'e4:d5:3d:ed:f5:be'
+	}
 
 # Location and MAC address of Access point nodes
-TxNodes = {1,5,'e4:d5:3d:ed:f5:bf';
-	1,15,'e4:d5:3d:ed:f5:bc';
-	1,25,'e4:d5:3d:ed:f5:b4';}
+TxNodes = {1,2,'74:a7:22:6b:e4:fa'; % LG Optimus smartphone
+	1,4,'a2:32:99:19:c3:62';   % Lenovo A319 smatphone
+	%1,25,'e4:d5:3d:ed:f5:b4';
+	}
 
 % number of nodes
 num_RxNodes = size(RxNodes)(1,1)
@@ -61,6 +65,7 @@ for i=1:size(RxNodes)(1,1)
 		% find number of steps required to be "one pixel wide" in the shorter
 		% two dimensions
 		n = max(abs(ab)) + 1;
+		%n = max(abs(ab)) + 5;
 
 		% compute line
 		s = repmat(linspace(0, 1, n)', 1, 2);
@@ -96,44 +101,69 @@ historyY = [];
 % initialize backgroundY matrix
 backgroundY = [];
 
+% initialize the diffY vector which holds the difference of Y and backgroundY for a moment
+diffY = [];
+
 % dynamically drawing the image based on different Y vectors until the end of file
 while(txt!=-1)
 	txt=fgetl(fid);
 	if(txt!=-1)
-		txt
 		packet = strsplit(txt);
-		senderMAC = packet(1,1)
-		num_data = cell2mat(packet(1,2))
+		packetLength = length(packet);
 
-		%{
-		% Asanka: Extract the other MAC addresses and their RSSI values
-		i=0;
-		while(i<num_data)
-			packet(1,i+3)
-			i
-			i=i+1;
+		senderMAC = packet(1,1);
+		num_data = cell2mat(packet(1,2));
+
+		% collect each pair of MAC address and RSSI value
+		i=3;
+		while(i<packetLength)
+			recvMAC = packet(1,i);
+			% that rssi value is a 1x3 vector. We need the real value of it
+			rssi = str2num(cell2mat(packet(1,i+1)));
+	
+			for j=1:length(linkMACs)
+
+				if( cell2mat(senderMAC)==cell2mat(linkMACs(j,1)) )
+
+					if( cell2mat(recvMAC)==cell2mat(linkMACs(j,2)) )
+						"Matching!"
+						% Asanka: For each extracted MAC address pair, find it's correct
+						%index position using linkMACs list and then insert the RSSI value
+						% to that correct position in Y vector.
+						Y(1,j)=rssi;
+
+						% Asanka: Append this updated Y vector to historyY matrix as a new raw.
+						% A 'running average' was performed in this historyY matrix to get the
+						% backgroundY vector in each time we update this historyY matrix.
+						% Additionally, remove unnecessary old data raws from historyY matrix
+						% which are out of the current window.
+						historyY = [historyY; Y]						
+						if( length(historyY)>100 )
+							historyY([1],:) = [];
+						end
+						backgroundY = mean(historyY);
+
+						% Asanka: calculate the difference of Y vector and backgroundY vector
+						% to get an RSSI vector which we will use in the calculation of
+						% image construction.
+						diffY = abs(Y-backgroundY)
+					else
+						%"Not matching!"
+					end	
+				else
+					%"Not matching!"
+				end
+			end
+
+			i=i+2;
 		end
-		%}
-
-		% Asanka: For each extracted MAC address pair, find it's correct
-		%index position using linkMACs list and then insert the RSSI value
-		% to that correct position in Y vector.
-
-		% Asanka: Append this updated Y vector to historyY matrix as a new raw.
-		% A 'running average' was performed in this historyY matrix to get the
-		% backgroundY vector in each time we update this historyY matrix.
-		% Additionally, remove unnecessary old data raws from historyY matrix
-		% which are out of the current window.
-
-		% Asanka: calculate the difference of Y vector and backgroundY vector
-		% to get an RSSI vector which we will use in the calculation of
-		% image construction.
-
 	end
+
+	"-----------------------------------------------------------"
 
 	% generating a Y vector with sample RSSI change values
 	%Y=zeros(1, num_links);
-	Y=rand(1, num_links);
+	%Y=rand(1, num_links);
 	%Y = randi([0 0.5],1,num_links);
 	%Y(170:190)=25;
 	%Y(50:60)=50;
@@ -141,24 +171,29 @@ while(txt!=-1)
 	%Y(randi([20 60]):randi([70 90]))=1;	
 
 	% generating image matrix based on Y vector
-	X=Y*W;
+	%X=diffY*W;
+	Img=diffY*W;
 	
 	% attempting to apply a high-pass filter to reduce noise or smooth out
-	%for i=1:length(X)
-	%	if X(:,i)<1
-	%		X(:,i)=0;
-	%	end
-	%end
+	for i=1:length(Img)
+		if Img(:,i)<2
+			Img(:,i)=0;
+		end
 
-	[mat,padded] = vec2mat(X,width);
+		%if X(:,i)>2
+		%	X(:,i)=10;
+		%end
+	end
+
+	[mat,padded] = vec2mat(Img,width);
 	%mat
 
-	image(mat,'CDataMapping','scaled');
-	%image(mat)
-	colorbar
+	%image(mat,'CDataMapping','scaled');
+	image(mat);
+	colorbar;
 	title('Radio Tomographic Imaging');
 
-	pause(0.5)
+	pause(0.05);
 end
 
 fclose (fid);
