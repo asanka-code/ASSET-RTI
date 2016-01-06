@@ -11,14 +11,15 @@ N = width * height;
 W=[];
 
 # Location and MAC address of RSSI measuring nodes
-RxNodes = {5,2,'b0:47:bf:ee:54:da'; % Samsung GrandPrime smartphone
-	%30,25,'e4:d5:3d:ed:f5:be'
+RxNodes = {5,1,'b0:47:bf:ee:54:da'; % Samsung GrandPrime smartphone (mine)
+	5,3,'b0:47:bf:ee:54:d4';  % Samsung GrandPrime smartphone (Dinith)
+	5,5,'b0:47:bf:ee:54:c8'  % Samsung GrandPrime smartphone (Prabod)
 	}
 
 # Location and MAC address of Access point nodes
-TxNodes = {1,2,'74:a7:22:6b:e4:fa'; % LG Optimus smartphone
-	1,4,'a2:32:99:19:c3:62';   % Lenovo A319 smatphone
-	%1,25,'e4:d5:3d:ed:f5:b4';
+TxNodes = {1,1,'74:a7:22:6b:e4:fa'; % LG Optimus smartphone
+	1,3,'a2:32:99:19:c3:62';   % Lenovo A319 smatphone
+	1,5,'5e:cf:7f:02:2d:55'   % ESP8266-esp07 module
 	}
 
 % number of nodes
@@ -175,15 +176,15 @@ while(txt!=-1)
 	Img=diffY*W;
 	
 	% attempting to apply a high-pass filter to reduce noise or smooth out
-	for i=1:length(Img)
-		if Img(:,i)<2
-			Img(:,i)=0;
-		end
+	%for i=1:length(Img)
+	%	if Img(:,i)<2
+	%		Img(:,i)=0;
+	%	end
 
 		%if X(:,i)>2
 		%	X(:,i)=10;
 		%end
-	end
+	%end
 
 	[mat,padded] = vec2mat(Img,width);
 	%mat
