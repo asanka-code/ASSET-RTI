@@ -14,20 +14,20 @@ W=[];
 RxNodes = {5,1,'b0:47:bf:ee:54:da'; % Samsung GrandPrime smartphone (mine)
 %	5,3,'b0:47:bf:ee:54:d4';  % Samsung GrandPrime smartphone (Dinith)
 %	5,5,'b0:47:bf:ee:54:c8'  % Samsung GrandPrime smartphone (Prabod)
-	}
+	};
 
 # Location and MAC address of Access point nodes
 TxNodes = {1,1,'74:a7:22:6b:e4:fa'; % LG Optimus smartphone
 	1,3,'a2:32:99:19:c3:62';   % Lenovo A319 smatphone
 %	1,5,'5e:cf:7f:02:2d:55'   % ESP8266-esp07 module
-	}
+	};
 
 
 
 % number of nodes
-num_RxNodes = size(RxNodes)(1,1)
-num_TxNodes = size(TxNodes)(1,1)
-total_nodes = num_RxNodes + num_TxNodes
+num_RxNodes = size(RxNodes)(1,1);
+num_TxNodes = size(TxNodes)(1,1);
+total_nodes = num_RxNodes + num_TxNodes;
 
 % number of links (this will get updated shortly)
 num_links=0;
@@ -88,7 +88,7 @@ for i=1:size(RxNodes)(1,1)
 	end
 end
 
-num_links
+num_links;
 
 % the named pipe file from which the RSSI data comes as a structured string
 fid = fopen ("/home/asanka/Downloads/myfifo");
@@ -132,7 +132,7 @@ while(txt!=-1)
 				if( cell2mat(senderMAC)==cell2mat(linkMACs(j,1)) )
 
 					if( cell2mat(recvMAC)==cell2mat(linkMACs(j,2)) )
-						"Matching!"
+						"Matching!";
 						% Asanka: For each extracted MAC address pair, find it's correct
 						%index position using linkMACs list and then insert the RSSI value
 						% to that correct position in Y vector.
@@ -152,63 +152,7 @@ while(txt!=-1)
 		end
 	end
 
-	% checking whether all links in Y vector has got update since the last image generation cycle
-	if(all(didYupdated))
-
-		% reset the vector which keeps track of Y vector
-		didYupdated=zeros(1, num_links);
-
-		% Asanka: Append this updated Y vector to historyY matrix as a new raw.
-		% A 'running average' was performed in this historyY matrix to get the
-		% backgroundY vector in each time we update this historyY matrix.
-		% Additionally, remove unnecessary old data raws from historyY matrix
-		% which are out of the current window.
-		historyY = [historyY; Y]						
-		if( length(historyY)>100 )
-			historyY([1],:) = [];
-		end
-		backgroundY = mean(historyY);
-
-		% Asanka: calculate the difference of Y vector and backgroundY vector
-		% to get an RSSI vector which we will use in the calculation of
-		% image construction.
-		diffY = abs(Y-backgroundY)
-
-		% generating a Y vector with sample RSSI change values
-		%Y=zeros(1, num_links);
-		%Y=rand(1, num_links);
-		%Y = randi([0 0.5],1,num_links);
-		%Y(170:190)=25;
-		%Y(50:60)=50;
-		%Y(150:160)=60;
-		%Y(randi([20 60]):randi([70 90]))=1;	
-
-		% generating image matrix based on Y vector
-		%X=diffY*W;
-		Img=diffY*W;
-	
-		% attempting to apply a high-pass filter to reduce noise or smooth out
-		%for i=1:length(Img)
-		%	if Img(:,i)<2
-		%		Img(:,i)=0;
-		%	end
-
-			%if X(:,i)>2
-			%	X(:,i)=10;
-			%end
-		%end
-
-		[mat,padded] = vec2mat(Img,width);
-		%mat
-
-		%image(mat,'CDataMapping','scaled');
-		image(mat);
-		colorbar;
-		title('Radio Tomographic Imaging');
-
-		% uncomment the pause if image rendering has a trouble with timing
-		pause(0.05);			
-	end
+	disp(Y);
 end
 
 fclose (fid);
