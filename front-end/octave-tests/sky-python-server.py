@@ -17,15 +17,19 @@ except OSError, e:
 bufsize=1 # line buffered where each line is flushed immediately to the file
 fifo = open(filename, 'w', bufsize)
 
-print "Waiting..."
+print "Starting..."
 
 while True:
-
-	print ser.readline()
-
-	data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-	print "-----------------------------------------------------\n", data.lower()
-	fifo.write(data.lower())
-	fifo.write('\n')
-
+	data = ser.readline().split()
+	if(len(data)>2):
+		# creating a dummy data array
+		# "senderid numdata node1 value1 node2 value2 node3 value3"
+		packet = "1 2 2 " + data[1] + " 3 -55"	
+		print "packet:", packet	
+	
+		#fifo.write(data)
+		fifo.write(packet)
+		fifo.write("\n")
+		#print packet
+	
 
