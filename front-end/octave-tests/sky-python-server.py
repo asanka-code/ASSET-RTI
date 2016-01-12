@@ -6,7 +6,6 @@ import serial
 # opening serial port
 ser = serial.Serial('/dev/ttyUSB0', 115200)
 
-'''
 # opening temporary file (named pipe)
 filename = '/home/asanka/Downloads/myfifo'
 print filename
@@ -17,7 +16,6 @@ except OSError, e:
 
 bufsize=1 # line buffered where each line is flushed immediately to the file
 fifo = open(filename, 'w', bufsize)
-'''
 
 print "Waiting..."
 
@@ -25,9 +23,9 @@ while True:
 
 	print ser.readline()
 
-	'''
 	data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
 	print "-----------------------------------------------------\n", data.lower()
 	fifo.write(data.lower())
 	fifo.write('\n')
-	'''
+
+
