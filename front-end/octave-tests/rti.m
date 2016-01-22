@@ -10,12 +10,19 @@ W=[];
 
 % coordinates of the wireless nodes (x coordinate, y coordinate, node id).
 % list should be in the sorted order of node ids.
+%coords=[5,1,1;
+%	5,3,2;
+%	5,5,3;
+%	1,1,4;
+%	1,3,5;
+%	1,5,6;];
+
 coords=[5,1,1;
-	5,3,2;
-	5,5,3;
-	1,1,4;
-	1,3,5;
-	1,5,6;];
+	1,5,2;
+	5,3,3;
+	5,5,4;
+	1,1,5;
+	1,3,6;];
 
 % number of nodes
 num_nodes=length(coords)
