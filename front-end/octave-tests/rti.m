@@ -177,14 +177,14 @@ while(txt!=-1)
 			historyY([1],:) = [];
 		end
 
-		backgroundY = mean(historyY)
-		%backgroundY = var(historyY)
+		%backgroundY = mean(historyY)
+		backgroundY = var(historyY)
 
 		% Asanka: calculate the difference of Y vector and backgroundY vector
 		% to get an RSSI vector which we will use in the calculation of
 		% image construction.
-		diffY = abs(Y-backgroundY)
-		%diffY = backgroundY;
+		%diffY = abs(Y-backgroundY)
+		diffY = backgroundY;
 
 		% generating a Y vector with sample RSSI change values
 		%Y=zeros(1, num_links);
@@ -219,7 +219,8 @@ while(txt!=-1)
 		title('Radio Tomographic Imaging');
 
 		% uncomment the pause if image rendering has a trouble with timing
-		pause(0.05);			
+		%pause(0.05);			
+		pause(0.005);
 	% end
 end
 
